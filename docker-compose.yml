@@ -2,7 +2,7 @@ services:
   app:
     build: .
     container_name: flask-client-camera
-    command: gunicorn -b 0.0.0.0:5000 --worker-class eventlet -w 1 app:app
+    command: python emotion_detection.py --model output/model-CK3.pth --prototxt model/deploy.prototxt.txt --caffemodel model/res10_300x300_ssd_iter_140000_fp16.caffemodel
     ports:
       - 8080:5000
     volumes:

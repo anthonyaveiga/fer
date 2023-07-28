@@ -16,4 +16,4 @@ RUN pip install -r requirements.txt
 
 ADD . . 
 
-CMD gunicorn -b 0.0.0.0:5000 --worker-class eventlet -w 1 app:app
+CMD python emotion_detection.py --model output/model-CK3.pth --prototxt model/deploy.prototxt.txt --caffemodel model/res10_300x300_ssd_iter_140000_fp16.caffemodel
