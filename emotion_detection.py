@@ -48,7 +48,6 @@ net = cv2.dnn.readNetFromCaffe(args['prototxt'], args['caffemodel'])
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-
 emotion_dict = {0: "Enojo", 1: "Neutral", 2: "Asco", 3: "Miedo",
                 4: "Felicidad", 5: "Tristeza", 6: "Sorpresa"}
 
@@ -71,7 +70,8 @@ app = Flask(__name__, static_folder="./templates/static")
 app.config["SECRET_KEY"] = "secret!"
 socketio = SocketIO(app, async_mode="eventlet")
 
-client = MongoClient('mongodb://mongo:l3MFdI8VXH3spo8aWIew@containers-us-west-117.railway.app:5750')
+client = MongoClient(
+    'mongodb://mongo:l3MFdI8VXH3spo8aWIew@containers-us-west-117.railway.app:5750')
 db = client['fluctuating_data']
 collection = db['data']
 
@@ -81,13 +81,31 @@ button_status = False
 # Variable global para controlar el hilo que envía los datos a la base de datos
 thread_stop = threading.Event()
 
+
 def store_data_in_db():
     global fluctuating_variable, thread_stop, additional_value
 
     while not thread_stop.is_set():
         time.sleep(10)
         if button_status:
-            data_to_store = {'value': fluctuating_variable, 'additional_value': additional_value}
+
+            
+            # Separar la emoción y la probabilidad utilizando el método split()
+            emocion, probabilidad_str = fluctuating_variable.split(":")
+            # Limpiar la cadena de probabilidad para eliminar el símbolo de porcentaje (%)
+            probabilidad_str = probabilidad_str.replace("%", "")
+
+            # Convertir la probabilidad de string a un número de punto flotante (float)
+            probabilidad = float(probabilidad_str)            
+
+
+
+            # data_to_store = {'paciente': additional_value, 'value': fluctuating_variable, 'paciente': additional_value}
+            data_to_store = {"paciente": {
+                "nombre": additional_value,
+                "emocion_detectada": emocion,
+                "probabilidad": probabilidad
+            }}
             collection.insert_one(data_to_store)
 
 
@@ -132,6 +150,7 @@ def test_connect():
     print("Connected")
     emit("my response", {"data": "Connected"})
 
+
 def fluctuating_loop():
 
     @socketio.on("image")
@@ -157,11 +176,12 @@ def fluctuating_loop():
 
         # get the frame dimension, resize it and convert it to a blob
         (h, w) = image.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300))
+        blob = cv2.dnn.blobFromImage(cv2.resize(
+            image, (300, 300)), 1.0, (300, 300))
 
         # infer the blob through the network to get the detections and predictions
         net.setInput(blob)
-        
+
         detections = net.forward()
 
         global fluctuating_variable
@@ -204,7 +224,7 @@ def fluctuating_loop():
                     prob_text = f"{emotion}: {prob * 100:.2f}%"
                     width = int(prob * 300)
                     cv2.rectangle(canvas, (5, (i * 50) + 5), (width, (i * 50) + 50),
-                                (0, 0, 255), -1)
+                                  (0, 0, 255), -1)
                     cv2.putText(canvas, prob_text, (5, (i * 50) + 30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
@@ -215,27 +235,29 @@ def fluctuating_loop():
                 face_text = f"{face_emotion}: {top_p * 100:.2f}%"
                 fluctuating_variable = face_text
                 ###########################
-                cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
+                cv2.rectangle(output, (start_x, start_y),
+                              (end_x, end_y), (0, 255, 0), 2)
                 y = start_y - 10 if start_y - 10 > 10 else start_y + 10
                 cv2.putText(output, face_text, (start_x, y), cv2.FONT_HERSHEY_SIMPLEX,
                             1.05, (0, 255, 0), 2)
 
         frame_resized = cv2.resize(output, (640, 360))
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-        result, frame_encoded = cv2.imencode(".jpg", frame_resized, encode_param)
+        result, frame_encoded = cv2.imencode(
+            ".jpg", frame_resized, encode_param)
         processed_img_data = base64.b64encode(frame_encoded).decode()
         b64_src = "data:image/jpg;base64,"
         processed_img_data = b64_src + processed_img_data
         emit("processed_image", processed_img_data)
 
-
         frame_resized2 = cv2.resize(canvas, (640, 360))
         encode_param2 = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-        result, frame_encoded2 = cv2.imencode(".jpg", frame_resized2, encode_param2)
+        result, frame_encoded2 = cv2.imencode(
+            ".jpg", frame_resized2, encode_param2)
         processed_img_data2 = base64.b64encode(frame_encoded2).decode()
         b64_src2 = "data:image/jpg;base64,"
         processed_img_data2 = b64_src2 + processed_img_data2
-        emit("processed_image2",processed_img_data2)
+        emit("processed_image2", processed_img_data2)
 
 
 @app.route("/")
@@ -264,6 +286,8 @@ def update_button_status():
     return {'message': 'Button status updated successfully'}
 
 # Ruta para recibir el valor fluctuante desde el servidor
+
+
 @app.route('/get_fluctuating_variable', methods=['GET'])
 def get_fluctuating_variable():
     global fluctuating_variable
