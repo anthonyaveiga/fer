@@ -132,112 +132,110 @@ def test_connect():
     print("Connected")
     emit("my response", {"data": "Connected"})
 
-
-@socketio.on("image")
-def receive_image(image):
-    """
-    The receive_image function takes in an image from the webcam, converts it to grayscale, and then emits
-    the processed image back to the client.
-
-
-    :param image: Pass the image data to the receive_image function
-    :return: The image that was received from the client
-    """
-    # Decode the base64-encoded image data
-    image = base64_to_image(image)
-
-
-
-
-    # clone the current frame, convert it from BGR into RGB
-    image = utils.resize_image(image, width=720, height=720)
-    output = image.copy()
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    # initialize an empty canvas to output the probability distributions
-    canvas = np.zeros((350, 300, 3), dtype="uint8")
-
-    # get the frame dimension, resize it and convert it to a blob
-    (h, w) = image.shape[:2]
-    blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300))
-
-    # infer the blob through the network to get the detections and predictions
-    net.setInput(blob)
-
 def fluctuating_loop():
-    detections = net.forward()
-    global fluctuating_variable
-    # iterate over the detections
-    for i in range(0, detections.shape[2]):
 
-        # grab the confidence associated with the model's prediction
-        confidence = detections[0, 0, i, 2]
-
-        # eliminate weak detections, ensuring the confidence is greater
-        # than the minimum confidence pre-defined
-        if confidence > args['confidence']:
-
-            # compute the (x,y) coordinates (int) of the bounding box for the face
-            box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-            (start_x, start_y, end_x, end_y) = box.astype("int")
-
-            # grab the region of interest within the image (the face),
-            # apply a data transform to fit the exact method our network was trained,
-            # add a new dimension (C, H, W) => (N, C, H, W) and send it to the device
-            face = image[start_y:end_y, start_x:end_x]
-            face = data_transform(face)
-            face = face.unsqueeze(0)
-            face = face.to(device)
-
-            # infer the face (roi) into our pretrained model and compute the
-            # probability score and class for each face and grab the readable
-            # emotion detection
-            predictions = model(face)
-            prob = nnf.softmax(predictions, dim=1)
-            top_p, top_class = prob.topk(1, dim=1)
-            top_p, top_class = top_p.item(), top_class.item()
-
-            # grab the list of predictions along with their associated labels
-            emotion_prob = [p.item() for p in prob[0]]
-            emotion_value = emotion_dict.values()
-
-            # draw the probability distribution on an empty canvas initialized
-            for (i, (emotion, prob)) in enumerate(zip(emotion_value, emotion_prob)):
-                prob_text = f"{emotion}: {prob * 100:.2f}%"
-                width = int(prob * 300)
-                cv2.rectangle(canvas, (5, (i * 50) + 5), (width, (i * 50) + 50),
-                              (0, 0, 255), -1)
-                cv2.putText(canvas, prob_text, (5, (i * 50) + 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-            # draw the bounding box of the face along with the associated emotion
-            # and probability
-            face_emotion = emotion_dict[top_class]
-            ###########################
-            face_text = f"{face_emotion}: {top_p * 100:.2f}%"
-            fluctuating_variable = face_text
-            ###########################
-            cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
-            y = start_y - 10 if start_y - 10 > 10 else start_y + 10
-            cv2.putText(output, face_text, (start_x, y), cv2.FONT_HERSHEY_SIMPLEX,
-                        1.05, (0, 255, 0), 2)
-
-    frame_resized = cv2.resize(output, (640, 360))
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-    result, frame_encoded = cv2.imencode(".jpg", frame_resized, encode_param)
-    processed_img_data = base64.b64encode(frame_encoded).decode()
-    b64_src = "data:image/jpg;base64,"
-    processed_img_data = b64_src + processed_img_data
-    emit("processed_image", processed_img_data)
+    @socketio.on("image")
+    def receive_image(image):
+        """
+        The receive_image function takes in an image from the webcam, converts it to grayscale, and then emits
+        the processed image back to the client.
 
 
-    frame_resized2 = cv2.resize(canvas, (640, 360))
-    encode_param2 = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-    result, frame_encoded2 = cv2.imencode(".jpg", frame_resized2, encode_param2)
-    processed_img_data2 = base64.b64encode(frame_encoded2).decode()
-    b64_src2 = "data:image/jpg;base64,"
-    processed_img_data2 = b64_src2 + processed_img_data2
-    emit("processed_image2",processed_img_data2)
+        :param image: Pass the image data to the receive_image function
+        :return: The image that was received from the client
+        """
+        # Decode the base64-encoded image data
+        image = base64_to_image(image)
+
+        # clone the current frame, convert it from BGR into RGB
+        image = utils.resize_image(image, width=720, height=720)
+        output = image.copy()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # initialize an empty canvas to output the probability distributions
+        canvas = np.zeros((350, 300, 3), dtype="uint8")
+
+        # get the frame dimension, resize it and convert it to a blob
+        (h, w) = image.shape[:2]
+        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300))
+
+        # infer the blob through the network to get the detections and predictions
+        net.setInput(blob)
+        
+        detections = net.forward()
+
+        global fluctuating_variable
+        # iterate over the detections
+        for i in range(0, detections.shape[2]):
+
+            # grab the confidence associated with the model's prediction
+            confidence = detections[0, 0, i, 2]
+
+            # eliminate weak detections, ensuring the confidence is greater
+            # than the minimum confidence pre-defined
+            if confidence > args['confidence']:
+
+                # compute the (x,y) coordinates (int) of the bounding box for the face
+                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                (start_x, start_y, end_x, end_y) = box.astype("int")
+
+                # grab the region of interest within the image (the face),
+                # apply a data transform to fit the exact method our network was trained,
+                # add a new dimension (C, H, W) => (N, C, H, W) and send it to the device
+                face = image[start_y:end_y, start_x:end_x]
+                face = data_transform(face)
+                face = face.unsqueeze(0)
+                face = face.to(device)
+
+                # infer the face (roi) into our pretrained model and compute the
+                # probability score and class for each face and grab the readable
+                # emotion detection
+                predictions = model(face)
+                prob = nnf.softmax(predictions, dim=1)
+                top_p, top_class = prob.topk(1, dim=1)
+                top_p, top_class = top_p.item(), top_class.item()
+
+                # grab the list of predictions along with their associated labels
+                emotion_prob = [p.item() for p in prob[0]]
+                emotion_value = emotion_dict.values()
+
+                # draw the probability distribution on an empty canvas initialized
+                for (i, (emotion, prob)) in enumerate(zip(emotion_value, emotion_prob)):
+                    prob_text = f"{emotion}: {prob * 100:.2f}%"
+                    width = int(prob * 300)
+                    cv2.rectangle(canvas, (5, (i * 50) + 5), (width, (i * 50) + 50),
+                                (0, 0, 255), -1)
+                    cv2.putText(canvas, prob_text, (5, (i * 50) + 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+                # draw the bounding box of the face along with the associated emotion
+                # and probability
+                face_emotion = emotion_dict[top_class]
+                ###########################
+                face_text = f"{face_emotion}: {top_p * 100:.2f}%"
+                fluctuating_variable = face_text
+                ###########################
+                cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
+                y = start_y - 10 if start_y - 10 > 10 else start_y + 10
+                cv2.putText(output, face_text, (start_x, y), cv2.FONT_HERSHEY_SIMPLEX,
+                            1.05, (0, 255, 0), 2)
+
+        frame_resized = cv2.resize(output, (640, 360))
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+        result, frame_encoded = cv2.imencode(".jpg", frame_resized, encode_param)
+        processed_img_data = base64.b64encode(frame_encoded).decode()
+        b64_src = "data:image/jpg;base64,"
+        processed_img_data = b64_src + processed_img_data
+        emit("processed_image", processed_img_data)
+
+
+        frame_resized2 = cv2.resize(canvas, (640, 360))
+        encode_param2 = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+        result, frame_encoded2 = cv2.imencode(".jpg", frame_resized2, encode_param2)
+        processed_img_data2 = base64.b64encode(frame_encoded2).decode()
+        b64_src2 = "data:image/jpg;base64,"
+        processed_img_data2 = b64_src2 + processed_img_data2
+        emit("processed_image2",processed_img_data2)
 
 
 @app.route("/")
