@@ -12,9 +12,10 @@
 
     	}
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-
+    <script
+      src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   </head>
 
   <body>
@@ -31,13 +32,36 @@
       <!-- <h1>video</h1> -->
     </div>
 
-    <h1>Flask MongoDB Example</h1>
-    <input type="checkbox" id="boton" onchange="toggleBoton()">
-    <label for="boton">Activar/desactivar</label>
-    <p>Valor fluctuante: <span id="valor_fluctuante">0</span></p>
-
+    <h1>Fluctuating Variable: {{ fluctuating_variable }}</h1>
+    <label for="additional-value">Additional Value:</label>
+    <input type="text" id="additional-value" name="additional-value">
+    <button id="toggle-button" onclick="toggleButton()">{% if button_status %}Desactivar{% else %}Activar{% endif %}</button>
 
     <script  src="{{ url_for('static',filename='script.js') }}"></script>
+    <script>
+      function toggleButton() {
+          var button = document.getElementById("toggle-button");
+          var status = button.innerHTML === "Activar" ? true : false;
+          var additionalValue = document.getElementById("additional-value").value;
+
+          fetch('/update_button_status', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ status: status, additionalValue: additionalValue }),
+          })
+          .then(response => response.json())
+          .then(data => {
+              button.innerHTML = status ? "Desactivar" : "Activar";
+          })
+          .catch(error => {
+              console.error('Error:', error);
+          });
+      }
+
+     
+  </script>
   </body>
 
 </html>

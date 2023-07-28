@@ -21,10 +21,10 @@ import os
 
 from flask import Flask, render_template, send_from_directory, request
 from flask_socketio import SocketIO, emit
-from pymongo import MongoClient
-import time
-import threading
 
+from pymongo import MongoClient
+import threading
+import time
 
 
 # initialize the argument parser and establish the arguments required
@@ -71,20 +71,24 @@ app = Flask(__name__, static_folder="./templates/static")
 app.config["SECRET_KEY"] = "secret!"
 socketio = SocketIO(app, async_mode="eventlet")
 
-client = MongoClient('mongodb://user:Pucese*2023@localhost:27017')
-db = client['fer']
-collection = db['pacientes']
-boton_activado = False
+client = MongoClient('mongodb://mongo:l3MFdI8VXH3spo8aWIew@containers-us-west-117.railway.app:5750')
+db = client['fluctuating_data']
+collection = db['data']
 
-# Función para almacenar los datos en la base de datos de MongoDB
-def guardar_en_mongo(variable_fluctuante):
-    global boton_activado
+fluctuating_variable = ""
+# Variable global para indicar si el botón está activado o desactivado
+button_status = False
+# Variable global para controlar el hilo que envía los datos a la base de datos
+thread_stop = threading.Event()
 
-    if boton_activado:
-        # Realizar la inserción en la base de datos
-        collection.insert_one({'valor': variable_fluctuante})
-        time.sleep(1)
-       
+def store_data_in_db():
+    global fluctuating_variable, thread_stop, additional_value
+
+    while not thread_stop.is_set():
+        time.sleep(10)
+        if button_status:
+            data_to_store = {'value': fluctuating_variable, 'additional_value': additional_value}
+            collection.insert_one(data_to_store)
 
 
 @app.route("/favicon.ico")
@@ -159,8 +163,10 @@ def receive_image(image):
 
     # infer the blob through the network to get the detections and predictions
     net.setInput(blob)
-    detections = net.forward()
 
+def fluctuating_loop():
+    detections = net.forward()
+    global fluctuating_variable
     # iterate over the detections
     for i in range(0, detections.shape[2]):
 
@@ -207,10 +213,10 @@ def receive_image(image):
             # draw the bounding box of the face along with the associated emotion
             # and probability
             face_emotion = emotion_dict[top_class]
-            ####################
+            ###########################
             face_text = f"{face_emotion}: {top_p * 100:.2f}%"
-            guardar_en_mongo(face_text)
-            ####################
+            fluctuating_variable = face_text
+            ###########################
             cv2.rectangle(output, (start_x, start_y), (end_x, end_y), (0, 255, 0), 2)
             y = start_y - 10 if start_y - 10 > 10 else start_y + 10
             cv2.putText(output, face_text, (start_x, y), cv2.FONT_HERSHEY_SIMPLEX,
@@ -236,24 +242,38 @@ def receive_image(image):
 
 @app.route("/")
 def index():
-    """
-    The index function returns the index.html template, which is a landing page for users.
 
-    :return: The index
-    """
-    return render_template("index.html", boton_activado=boton_activado)
+    global fluctuating_variable, button_status
+    return render_template("index.html", fluctuating_variable=fluctuating_variable, button_status=button_status)
 
-@socketio.on('toggle_boton')
-def toggle_boton(data):
-    global boton_activado
 
-    boton_activado = data['boton_activado']
+@app.route('/update_button_status', methods=['POST'])
+def update_button_status():
+    global button_status, additional_value
 
-    if boton_activado:
-        # Iniciar el hilo para guardar los datos en MongoDB
-        t = threading.Thread(target=guardar_en_mongo)
-        t.start()
+    button_status = request.json['status']
+    additional_value = request.json['additionalValue']
+
+    if button_status:
+        # Iniciar el hilo para almacenar los datos en la base de datos mientras el botón esté activado
+        thread_stop.clear()
+        store_data_thread = threading.Thread(target=store_data_in_db)
+        store_data_thread.start()
+    else:
+        # Detener el hilo cuando el botón cambie a desactivado
+        thread_stop.set()
+
+    return {'message': 'Button status updated successfully'}
+
+# Ruta para recibir el valor fluctuante desde el servidor
+@app.route('/get_fluctuating_variable', methods=['GET'])
+def get_fluctuating_variable():
+    global fluctuating_variable
+
+    return {'value': fluctuating_variable}
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=5000, host='0.0.0.0')
+    fluctuating_thread = threading.Thread(target=fluctuating_loop)
+    fluctuating_thread.start()
+    socketio.run(app, debug=False, port=5000, host='0.0.0.0')

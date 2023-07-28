@@ -47,12 +47,3 @@ socket.on('processed_image2', function (image) {
 
 });
 
-function toggleBoton() {
-    var boton = document.getElementById('boton');
-    var estado = boton.checked;
-    socket.emit('toggle_boton', {boton_activado: estado});
-}
-
-socket.on('actualizar_valor', function (data) {
-    document.getElementById('valor_fluctuante').textContent = data;
-});
