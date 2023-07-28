@@ -48,3 +48,8 @@ socket.on('processed_image2', function (image) {
 });
 
 
+socket.on('actualizar_valor', function (data) {
+    document.getElementById('valor_fluctuante').textContent = data;
+});
+
+

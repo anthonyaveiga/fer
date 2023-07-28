@@ -234,6 +234,8 @@ def fluctuating_loop():
                 ###########################
                 face_text = f"{face_emotion}: {top_p * 100:.2f}%"
                 fluctuating_variable = face_text
+                socketio.emit('actualizar_valor', fluctuating_variable)
+
                 ###########################
                 cv2.rectangle(output, (start_x, start_y),
                               (end_x, end_y), (0, 255, 0), 2)
