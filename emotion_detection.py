@@ -75,6 +75,7 @@ client = MongoClient(
 db = client['fluctuating_data']
 collection = db['data']
 
+selected_option = ""
 fluctuating_variable = ""
 # Variable global para indicar si el botón está activado o desactivado
 button_status = False
@@ -83,7 +84,7 @@ thread_stop = threading.Event()
 
 
 def store_data_in_db():
-    global fluctuating_variable, thread_stop, additional_value
+    global fluctuating_variable, thread_stop, additional_value, selected_option
 
     while not thread_stop.is_set():
         time.sleep(10)
@@ -104,7 +105,8 @@ def store_data_in_db():
             data_to_store = {"paciente": {
                 "nombre": additional_value,
                 "emocion_detectada": emocion,
-                "probabilidad": probabilidad
+                "probabilidad": probabilidad,
+                "emecion_esperada": selected_option
             }}
             collection.insert_one(data_to_store)
 
@@ -271,10 +273,12 @@ def index():
 
 @app.route('/update_button_status', methods=['POST'])
 def update_button_status():
-    global button_status, additional_value
+    global button_status, additional_value, selected_option
 
     button_status = request.json['status']
     additional_value = request.json['additionalValue']
+    selected_option = request.json['selectedOption']
+
 
     if button_status:
         # Iniciar el hilo para almacenar los datos en la base de datos mientras el botón esté activado

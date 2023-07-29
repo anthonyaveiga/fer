@@ -36,6 +36,17 @@
     <p>Enviar a base de datos (cada 3 segundos hasta parar): </p>
     <label for="additional-value">Nombre del paciente:</label>
     <input type="text" id="additional-value" name="additional-value">
+    <label for="select-option">Emoción esperada:</label>
+    <select id="select-option" name="select-option">
+        <option value="Enojo">Enojo</option>
+        <option value="Neutral">Neutral</option>
+        <option value="Asco">Asco</option>
+        <option value="Miedo">Miedo</option>
+        <option value="Felicidad">Felicidad</option>
+        <option value="Tristeza">Tristeza</option>
+        <option value="Sorpresa">Sorpresa</option>
+    </select>
+
     <button id="toggle-button" onclick="toggleButton()">{% if button_status %}Desactivar{% else %}Activar{% endif %}</button>
 
     <script  src="{{ url_for('static',filename='script.js') }}"></script>
@@ -44,13 +55,15 @@
           var button = document.getElementById("toggle-button");
           var status = button.innerHTML === "Activar" ? true : false;
           var additionalValue = document.getElementById("additional-value").value;
+          var selectedOption = document.getElementById("select-option").value;
+          
 
           fetch('/update_button_status', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ status: status, additionalValue: additionalValue }),
+              body: JSON.stringify({ status: status, additionalValue: additionalValue, selectedOption: selectedOption}),
           })
           .then(response => response.json())
           .then(data => {
