@@ -53,3 +53,25 @@ socket.on('actualizar_valor', function (data) {
 });
 
 
+function toggleButton() {
+    var button = document.getElementById("toggle-button");
+    var status = button.innerHTML === "Activar" ? true : false;
+    var additionalValue = document.getElementById("additional-value").value;
+    var selectedOption = document.getElementById("select-option").value;
+    
+
+    fetch('/update_button_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: status, additionalValue: additionalValue, selectedOption: selectedOption}),
+    })
+    .then(response => response.json())
+    .then(data => {
+        button.innerHTML = status ? "Desactivar" : "Activar";
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}

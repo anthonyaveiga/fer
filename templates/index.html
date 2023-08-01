@@ -1,82 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Flask Client Camera Web App</title>
 
-    <style>
-    	#video {
-    		transform: rotateY(180deg);
-    		-webkit-transform:rotateY(180deg); /* Safari and Chrome */
-    		-moz-transform:rotateY(180deg); /* Firefox */
+<head>
+  <meta charset="UTF-8">
+  <title>Flask Client Camera Web App</title>
 
-    	}
-    </style>
-    <script
-      src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-  </head>
+  <style>
+    #video {
+      transform: rotateY(180deg);
+      -webkit-transform: rotateY(180deg);
+      /* Safari and Chrome */
+      -moz-transform: rotateY(180deg);
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+    crossorigin="anonymous"></script>
+</head>
 
-  <body>
+<body>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
 
-    <div id="container">
-      <video autoplay playsinline id="videoElement"></video>
-      <canvas id="canvas" width="400" height="300"></canvas>
+  <div id="container">
+    <video autoplay playsinline id="videoElement"></video>
+    <canvas id="canvas" width="400" height="300"></canvas>
+  </div>
+
+  <div class='video'>
+    <img id="photo" width="400" height="300">
+    <img id="photo2" width="400" height="300">
+
+  </div>
+
+  <h1>Emoción: <span id="valor_fluctuante">0</span></h1>
+  <p>Enviar a base de datos (cada 3 segundos hasta parar):</p>
+  <div class="form-row">
+    <div class="col-md-6">
+      <label for="additional-value">Nombre del paciente:</label>
+      <input type="text" id="additional-value" name="additional-value" class="form-control">
     </div>
-
-    <div class= 'video'>
-      <img id="photo" width="400" height="300">
-      <img id="photo2" width="400" height="300">
-
-      <!-- <h1>video</h1> -->
-    </div>
-
-    <h1>Emoción:  <span id="valor_fluctuante">0</span></h1>
-    <p>Enviar a base de datos (cada 3 segundos hasta parar): </p>
-    <label for="additional-value">Nombre del paciente:</label>
-    <input type="text" id="additional-value" name="additional-value">
-    <label for="select-option">Emoción esperada:</label>
-    <select id="select-option" name="select-option">
+    <div class="col-md-6">
+      <label for="select-option">Emoción esperada:</label>
+      <select id="select-option" class="form-select">
         <option value="Enojo">Enojo</option>
         <option value="Neutral">Neutral</option>
         <option value="Asco">Asco</option>
-        <option value="Miedo">Miedo</option>
         <option value="Felicidad">Felicidad</option>
+        <option value="Miedo">Miedo</option>
         <option value="Tristeza">Tristeza</option>
         <option value="Sorpresa">Sorpresa</option>
-    </select>
+      </select>
+    </div>
+  </div>
 
-    <button id="toggle-button" onclick="toggleButton()">{% if button_status %}Desactivar{% else %}Activar{% endif %}</button>
+  <button id="toggle-button" onclick="toggleButton()" type="button" class="btn btn-primary" data-bs-toggle="button">{%
+    if button_status %}Desactivar{% else %}Activar{% endif %}</button>
 
-    <script  src="{{ url_for('static',filename='script.js') }}"></script>
-    <script>
-      function toggleButton() {
-          var button = document.getElementById("toggle-button");
-          var status = button.innerHTML === "Activar" ? true : false;
-          var additionalValue = document.getElementById("additional-value").value;
-          var selectedOption = document.getElementById("select-option").value;
-          
 
-          fetch('/update_button_status', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ status: status, additionalValue: additionalValue, selectedOption: selectedOption}),
-          })
-          .then(response => response.json())
-          .then(data => {
-              button.innerHTML = status ? "Desactivar" : "Activar";
-          })
-          .catch(error => {
-              console.error('Error:', error);
-          });
-      }
+  <script src="{{ url_for('static',filename='script.js') }}"></script>
 
-     
-  </script>
-  </body>
+</body>
 
 </html>
-
