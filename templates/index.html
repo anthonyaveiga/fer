@@ -6,32 +6,44 @@
   <title>Flask Client Camera Web App</title>
 
   <style>
-    #video {
-      transform: rotateY(180deg);
-      -webkit-transform: rotateY(180deg);
-      /* Safari and Chrome */
-      -moz-transform: rotateY(180deg);
+    #videoElement {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
     }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none; /* Oculta el canvas inicialmente */
+    }
+ 
   </style>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
     crossorigin="anonymous"></script>
+    
 </head>
 
 <body>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-
+  
   <div id="container">
     <video autoplay playsinline id="videoElement"></video>
     <canvas id="canvas" width="400" height="300"></canvas>
   </div>
 
+
+  <div class="position-absolute top-0 end-0 translate-middle-x grid">
+
   <div class='video'>
-    <img id="photo" width="400" height="300">
-    <img id="photo2" width="400" height="300">
+    <img class="p-2 g-col-6" id="photo" width="400" height="300">
+    <img class="p-2 g-col-6" id="photo2" width="400" height="300">
 
   </div>
 
@@ -54,13 +66,16 @@
         <option value="Sorpresa">Sorpresa</option>
       </select>
     </div>
+
+    <button id="toggle-button" onclick="toggleButton()" type="button" class="btn btn-primary" data-bs-toggle="button">{%
+      if button_status %}Desactivar{% else %}Activar{% endif %}</button>
+    <span  class="badge text-bg-success"id="timerDisplay">00:00.000</span>
   </div>
 
-  <button id="toggle-button" onclick="toggleButton()" type="button" class="btn btn-primary" data-bs-toggle="button">{%
-    if button_status %}Desactivar{% else %}Activar{% endif %}</button>
-
+</div>
 
   <script src="{{ url_for('static',filename='script.js') }}"></script>
+  <script src="{{ url_for('static',filename='timer.js') }}"></script>
 
 </body>
 

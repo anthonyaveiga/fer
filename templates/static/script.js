@@ -53,25 +53,42 @@ socket.on('actualizar_valor', function (data) {
 });
 
 
+
 function toggleButton() {
-    var button = document.getElementById("toggle-button");
-    var status = button.innerHTML === "Activar" ? true : false;
-    var additionalValue = document.getElementById("additional-value").value;
-    var selectedOption = document.getElementById("select-option").value;
-    
+    const button = document.getElementById("toggle-button");
+    const status = button.innerHTML === "Activar" ? true : false;
+    const additionalValue = document.getElementById("additional-value").value;
+    const selectedOption = document.getElementById("select-option").value;
+
+    if (status) {
+        // Activar
+        button.innerHTML = "Desactivar ";
+        toggleTimer(); // Inicia el cronómetro cuando se activa
+
+        // Si se cumple la condición, agregamos la clase al botón
+        const spinnerSpan = document.createElement('span');
+        spinnerSpan.classList.add('spinner-grow', 'spinner-grow-sm');
+        button.appendChild(spinnerSpan);
+
+    } else {
+        // Desactivar
+        button.innerHTML = "Activar";
+        resetTimer(); // Detiene y reinicia el cronómetro cuando se desactiva
+    }
 
     fetch('/update_button_status', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: status, additionalValue: additionalValue, selectedOption: selectedOption}),
+        body: JSON.stringify({ status: status, additionalValue: additionalValue, selectedOption: selectedOption }),
     })
-    .then(response => response.json())
-    .then(data => {
-        button.innerHTML = status ? "Desactivar" : "Activar";
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
+        .then(response => response.json())
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
+
+
+
+
