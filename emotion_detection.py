@@ -23,6 +23,7 @@ from flask import Flask, render_template, send_from_directory, request
 from flask_socketio import SocketIO, emit
 
 from pymongo import MongoClient
+from dotenv import load_dotenv
 import threading
 import time
 
@@ -66,14 +67,19 @@ data_transform = transforms.Compose([
     ToTensor()
 ])
 
+load_dotenv()
+
+
 app = Flask(__name__, static_folder="./templates/static")
 app.config["SECRET_KEY"] = "secret!"
 socketio = SocketIO(app, async_mode="eventlet")
 
-client = MongoClient(
-    'mongodb://mongo:l3MFdI8VXH3spo8aWIew@containers-us-west-117.railway.app:5750')
-db = client['fluctuating_data']
-collection = db['data']
+mongodb_uri = os.environ.get('MONGODB_URI')
+
+
+client = MongoClient(mongodb_uri)
+db = client['TFM']
+collection = db['pacientes']
 
 selected_option = ""
 fluctuating_variable = ""
@@ -87,7 +93,7 @@ def store_data_in_db():
     global fluctuating_variable, thread_stop, additional_value, selected_option
 
     while not thread_stop.is_set():
-        time.sleep(10)
+        time.sleep(3)
         if button_status:
 
             

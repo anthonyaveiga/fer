@@ -3,6 +3,8 @@ services:
     build: .
     container_name: flask-client-camera
     command: python emotion_detection.py --model output/model-CK3.pth --prototxt model/deploy.prototxt.txt --caffemodel model/res10_300x300_ssd_iter_140000_fp16.caffemodel
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
     ports:
       - 8080:5000
     volumes:
