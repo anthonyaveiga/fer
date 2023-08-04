@@ -28,22 +28,9 @@ import threading
 import time
 
 
-# initialize the argument parser and establish the arguments required
-parser = argparse.ArgumentParser()
-
-parser.add_argument("-m", "--model", type=str, required=True,
-                    help="path to the trained model")
-parser.add_argument('-p', '--prototxt', type=str, required=True,
-                    help='Path to deployed prototxt.txt model architecture file')
-parser.add_argument('-c', '--caffemodel', type=str, required=True,
-                    help='Path to Caffe model containing the weights')
-parser.add_argument("-conf", "--confidence", type=int, default=0.5,
-                    help="the minimum probability to filter out weak detection")
-args = vars(parser.parse_args())
-
 # load our serialized model from disk
 print("[INFO] loading model...")
-net = cv2.dnn.readNetFromCaffe(args['prototxt'], args['caffemodel'])
+net = cv2.dnn.readNetFromCaffe("model/deploy.prototxt.txt", "model/res10_300x300_ssd_iter_140000_fp16.caffemodel")
 
 # check if gpu is available or not
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -54,7 +41,7 @@ emotion_dict = {0: "Enojo", 1: "Neutral", 2: "Asco", 3: "Miedo",
 
 # load the emotionNet weights
 model = EmotionNet(num_of_channels=1, num_of_classes=len(emotion_dict))
-model_weights = torch.load(args["model"])
+model_weights = torch.load("output/model-CK3.pth")
 model.load_state_dict(model_weights)
 model.to(device)
 model.eval()
@@ -201,7 +188,7 @@ def fluctuating_loop():
 
             # eliminate weak detections, ensuring the confidence is greater
             # than the minimum confidence pre-defined
-            if confidence > args['confidence']:
+            if confidence > 0.5:
 
                 # compute the (x,y) coordinates (int) of the bounding box for the face
                 box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -310,4 +297,4 @@ def get_fluctuating_variable():
 if __name__ == "__main__":
     fluctuating_thread = threading.Thread(target=fluctuating_loop)
     fluctuating_thread.start()
-    socketio.run(app, debug=False, port=5000, host='0.0.0.0')
+    socketio.run(app, debug=True, port=5000, host='0.0.0.0')
