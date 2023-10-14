@@ -1,4 +1,4 @@
-# Reconocimiento Emocional a través de Expresiones Faciales en Tiempo Real mediante Inteligencia Artificial
+# Prototipo de una aplicación de reconocimiento emocional aplicable en el área de la salud
 
 Este repositorio presenta un proyecto innovador centrado en el reconocimiento emocional utilizando expresiones faciales capturadas en tiempo real, aprovechando la potencia de la Inteligencia Artificial (IA). Nuestro enfoque se concentra en la aplicación práctica de esta tecnología en el ámbito de la salud, con el objetivo de automatizar la evaluación inicial del paciente y acelerar procesos de diagnóstico, que no solo se limitan a un nivel físico sino también psicológico.
 
